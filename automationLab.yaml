@@ -39,6 +39,7 @@ Resources:
               Effect: "Allow"
               Action:
                 - "S3:ListAllMyBuckets"
+              Resource: "*"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/IAMUserChangePassword"
 
