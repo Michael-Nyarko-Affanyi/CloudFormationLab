@@ -18,7 +18,7 @@ Parameters:
 Resources:
   TempUserPassword:
     Type: AWS::SecretsManager::Secret
-    properties:
+    Properties:
       Name: !Ref SecretName
       GenerateSecretString:
         GenerateStringKey: "password"
@@ -27,7 +27,7 @@ Resources:
 
   S3UserGroup:
     Type: AWS::IAM::Group
-    properties:
+    Properties:
       GroupName: "AutomationLabUsers"
       Policies:
         - PolicyName: "ListALLBuckets"
@@ -43,7 +43,7 @@ Resources:
 
   EC2UserGroup:
     Type: AWS::IAM::Group
-    properties:
+    Properties:
       GroupName: "EC2Users"
       Policies:
         - PolicyName: "EC2FullAccess"
@@ -83,7 +83,7 @@ Resources:
 
   FirstEC2User:
     Type: AWS::IAM::User
-    properties:
+    Properties:
       UserName: "ec2-user1"
       LoginProfile:
         Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
@@ -113,7 +113,7 @@ Resources:
 
   S3User:
     Type: AWS::IAM::User
-    properties:
+    Properties:
       UserName: "s3-user"
       LoginProfile:
         Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
