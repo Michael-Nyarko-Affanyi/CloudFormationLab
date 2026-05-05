@@ -20,7 +20,6 @@ Resources:
     Type: AWS::SecretsManager::Secret
     properties:
       Name: !Ref SecretName
-#      SecretString: "tempPassword123"
       GenerateSecretString:
         GenerateStringKey: "password"
         PasswordLength: 16
@@ -53,16 +52,50 @@ Resources:
             Statement:
               Sid: "ViewEC2"
               Effect: "Allow"
-              Action: "ec2:*"
+              Action:
+                - "ec2:DescribeInstances"
+                - "ec2:DescribeInstanceStatus"
+                - "ec2:DescribeImages"
+                - "ec2:DescribeKeyPairs"
+                - "ec2:DescribeSecurityGroups"
+                - "ec2:DescribeVpcs"
+                - "ec2:DescribeSubnets"
+                - "ec2:DescribeAvailabilityZones"
+                - "ec2:DescribeInstanceTypes"
+                - "ec2:RunInstances"
+                - "ec2:CreateTags"
               Resource: "*"
     ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+
+  EC2User2Boundary:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: "ec2-user2-boundary"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowEverythingExceptRunInstances"
+            Effect: "Allow"
+            NotAction: "ec2:RunInstances"
+            Resource: "*"
 
 
   FirstEC2User:
     Type: AWS::IAM::User
     properties:
-      UserName: "firstTestUser"
+      UserName: "ec2-user1"
+      LoginProfile:
+        Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
+        PasswordResetRequired: true
+      Groups:
+        - !Ref EC2UserGroup
+
+  SecondEC2User:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: "ec2-user2"
+      PermissionsBoundary: !Ref EC2User2Boundary
       LoginProfile:
         Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
         PasswordResetRequired: true
@@ -77,3 +110,13 @@ Resources:
               Effect: "Deny"
               Action: "ec2:RunInstances"
               Resource: "*"
+
+  S3User:
+    Type: AWS::IAM::User
+    properties:
+      UserName: "s3-user"
+      LoginProfile:
+        Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
+        PasswordResetRequired: true
+      Groups:
+        - !Ref S3UserGroup
