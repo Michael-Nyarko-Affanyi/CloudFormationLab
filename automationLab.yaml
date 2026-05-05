@@ -1,0 +1,79 @@
+AwsTemplateVersionFormat: "2010-09-09"
+Description: "Automation Lab"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: "Environment to deploy to"
+
+  SecretName:
+    Type: String
+    Description: "Default secret name for iam user"
+    Default: IAMUserTempPassword
+
+Resources:
+  TempUserPassword:
+    Type: AWS::SecretsManager::Secret
+    properties:
+      Name: !Ref SecretName
+#      SecretString: "tempPassword123"
+      GenerateSecretString:
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+  S3UserGroup:
+    Type: AWS::IAM::Group
+    properties:
+      GroupName: "AutomationLabUsers"
+      Policies:
+        - PolicyName: "ListALLBuckets"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Sid: "ListAllBuckets"
+              Effect: "Allow"
+              Action:
+                - "S3:ListAllMyBuckets"
+    ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+
+  EC2UserGroup:
+    Type: AWS::IAM::Group
+    properties:
+      GroupName: "EC2Users"
+      Policies:
+        - PolicyName: "EC2FullAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Sid: "ViewEC2"
+              Effect: "Allow"
+              Action: "ec2:*"
+              Resource: "*"
+    ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/IAMUserChangePassword"
+
+
+  FirstEC2User:
+    Type: AWS::IAM::User
+    properties:
+      UserName: "firstTestUser"
+      LoginProfile:
+        Password: !Sub '{{resolve:secretsmanager:${TempUserPassword}:SecretString:password}}'
+        PasswordResetRequired: true
+      Groups:
+        - !Ref EC2UserGroup
+      Policies:
+        - PolicyName: "DenyCreateInstance"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Sid: "DenyCreateInstance"
+              Effect: "Deny"
+              Action: "ec2:RunInstances"
+              Resource: "*"
