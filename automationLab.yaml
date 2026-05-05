@@ -21,6 +21,7 @@ Resources:
     Properties:
       Name: !Ref SecretName
       GenerateSecretString:
+        SecretStringTemplate: '{"username": "tempuser"}'
         GenerateStringKey: "password"
         PasswordLength: 16
         ExcludeCharacters: "!@#$%^&*()_+-=[]{}|;:,.<>?"
